@@ -1,0 +1,2248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CalcHub - Calculator & Converter</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Archivo:wght@300;500;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0a0e1a;
+    --surface:   #151a2b;
+    --surface2:  #1a2033;
+    --border:    #2a3245;
+    --text:      #e8ecf5;
+    --muted:     #7d8899;
+    --accent:    #5b9eff;
+    --accent2:   #4a7fcc;
+    --green:     #4ade80;
+    --orange:    #fb923c;
+    --calc-display: #0d1117;
+    --calc-number:  #1c2128;
+    --calc-operator:#1e3a5f;
+    --calc-function:#252932;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    margin: 0;
+    overflow-x: hidden;
+  }
+
+  /* --- app header --- */
+  .app-header {
+    background: var(--surface);
+    border-bottom: 2px solid var(--border);
+    padding: 20px 24px;
+    text-align: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(10px);
+    background: rgba(21, 26, 43, 0.95);
+  }
+  .app-header h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--accent), var(--green));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 6px;
+  }
+  .app-header p {
+    font-size: .82rem;
+    color: var(--muted);
+    font-weight: 400;
+  }
+
+  /* --- main navigation tabs --- */
+  .main-nav {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    display: flex;
+    gap: 4px;
+    position: sticky;
+    top: 76px;
+    z-index: 99;
+    backdrop-filter: blur(10px);
+    background: rgba(21, 26, 43, 0.95);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .main-nav::-webkit-scrollbar {
+    height: 3px;
+  }
+  .main-nav::-webkit-scrollbar-thumb {
+    background: var(--accent);
+    border-radius: 3px;
+  }
+  .main-nav button {
+    flex-shrink: 0;
+    min-width: 100px;
+    padding: 14px 16px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-family: inherit;
+    font-size: .85rem;
+    font-weight: 600;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all .2s;
+    letter-spacing: .02em;
+    white-space: nowrap;
+  }
+  .main-nav button:hover {
+    color: var(--text);
+    background: rgba(255,255,255,.02);
+  }
+  .main-nav button.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  /* --- content area --- */
+  .content {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    padding: 32px 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .view {
+    display: none;
+    width: 100%;
+    animation: fadeIn .3s ease;
+  }
+  .view.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ========================================
+     CALCULATOR STYLES
+     ======================================== */
+  .calculator-container {
+    max-width: 440px;
+    margin: 0 auto;
+  }
+
+  .calculator {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 20px;
+    padding: 28px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.4);
+  }
+
+  .calc-header {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .calc-header h2 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .calc-header p {
+    font-size: .72rem;
+    color: var(--muted);
+    margin-top: 4px;
+    letter-spacing: .08em;
+  }
+
+  .display {
+    background: var(--calc-display);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 16px;
+    margin-bottom: 20px;
+    min-height: 88px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 4px;
+  }
+  .expression {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .82rem;
+    color: var(--muted);
+    min-height: 1.2em;
+    text-align: right;
+    word-break: break-all;
+  }
+  .result {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--text);
+    text-align: right;
+    word-break: break-all;
+    line-height: 1.2;
+  }
+
+  .mode-toggle {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    background: var(--calc-display);
+    border-radius: 10px;
+    padding: 6px;
+  }
+  .mode-toggle button {
+    flex: 1;
+    padding: 8px;
+    border: none;
+    border-radius: 7px;
+    font-family: inherit;
+    font-size: .75rem;
+    font-weight: 600;
+    cursor: pointer;
+    background: transparent;
+    color: var(--muted);
+    transition: all .2s;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+  .mode-toggle button.active {
+    background: var(--surface);
+    color: var(--accent);
+    box-shadow: 0 2px 6px rgba(0,0,0,.2);
+  }
+
+  .buttons {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+  }
+
+  .calc-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .88rem;
+    font-weight: 600;
+    padding: 16px 8px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all .15s;
+    background: var(--calc-number);
+    color: var(--text);
+  }
+
+  .calc-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,.3);
+    border-color: var(--accent);
+  }
+  .calc-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 3px rgba(0,0,0,.2);
+  }
+
+  .btn-operator {
+    background: var(--calc-operator);
+    color: var(--accent);
+    font-weight: 700;
+  }
+  .btn-function {
+    background: var(--calc-function);
+    font-size: .76rem;
+  }
+  .btn-clear {
+    background: #3d1f1f;
+    color: #ff6b6b;
+    font-weight: 700;
+  }
+  .btn-equals {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff;
+    font-weight: 700;
+    grid-column: span 2;
+  }
+  .btn-equals:hover {
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+  }
+
+  .error { color: #ff6b6b; }
+
+  /* ========================================
+     SIMPLE CALCULATOR STYLES
+     ======================================== */
+  .simple-calc-container {
+    max-width: 380px;
+    margin: 0 auto;
+  }
+
+  .simple-calc {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 20px;
+    padding: 28px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.4);
+  }
+
+  .simple-display {
+    background: var(--calc-display);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px 20px;
+    margin-bottom: 20px;
+    min-height: 100px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+
+  .simple-expression {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .9rem;
+    color: var(--muted);
+    min-height: 1.3em;
+    text-align: right;
+  }
+
+  .simple-result {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--text);
+    text-align: right;
+    line-height: 1.2;
+  }
+
+  .simple-buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+
+  .simple-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.1rem;
+    font-weight: 600;
+    padding: 20px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all .15s;
+    background: var(--calc-number);
+    color: var(--text);
+  }
+
+  .simple-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,.3);
+  }
+
+  .simple-btn:active {
+    transform: translateY(0);
+  }
+
+  .simple-btn.op {
+    background: var(--calc-operator);
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .simple-btn.clear {
+    background: #3d1f1f;
+    color: #ff6b6b;
+  }
+
+  .simple-btn.equals {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff;
+    grid-column: span 2;
+  }
+
+  .simple-btn.zero {
+    grid-column: span 2;
+  }
+
+  /* ========================================
+     EQUATION SOLVER STYLES
+     ======================================== */
+  .solver-container {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .solver-card {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 20px;
+    padding: 32px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.4);
+  }
+
+  .solver-header {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+
+  .solver-header h2 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+
+  .solver-header p {
+    font-size: .85rem;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  .equation-input-group {
+    margin-bottom: 20px;
+  }
+
+  .equation-input-group label {
+    display: block;
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--muted);
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+
+  .equation-input {
+    width: 100%;
+    background: var(--calc-display);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1rem;
+    color: var(--text);
+    outline: none;
+    transition: border-color .2s;
+  }
+
+  .equation-input:focus {
+    border-color: var(--accent);
+  }
+
+  .solve-btn {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .2s;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+
+  .solve-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(91, 158, 255, 0.4);
+  }
+
+  .solution-box {
+    margin-top: 24px;
+    background: var(--calc-display);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    display: none;
+  }
+
+  .solution-box.visible {
+    display: block;
+    animation: fadeIn .3s ease;
+  }
+
+  .solution-title {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  .solution-result {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--green);
+    margin-bottom: 20px;
+  }
+
+  .solution-steps {
+    border-top: 1px solid var(--border);
+    padding-top: 16px;
+  }
+
+  .solution-steps h4 {
+    font-size: .82rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  .step {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .88rem;
+    color: var(--text);
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,255,255,.05);
+  }
+
+  .step:last-child {
+    border-bottom: none;
+  }
+
+  .step-num {
+    color: var(--accent);
+    font-weight: 700;
+    margin-right: 8px;
+  }
+
+  /* ========================================
+     FINANCE CALCULATOR STYLES
+     ======================================== */
+  .finance-container {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .finance-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 6px;
+  }
+
+  .finance-tab {
+    flex: 1;
+    padding: 10px 12px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-family: inherit;
+    font-size: .82rem;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all .2s;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+
+  .finance-tab:hover {
+    color: var(--text);
+    background: var(--surface2);
+  }
+
+  .finance-tab.active {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .finance-card {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 20px;
+    padding: 28px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.4);
+  }
+
+  .finance-section {
+    display: none;
+  }
+
+  .finance-section.active {
+    display: block;
+    animation: fadeIn .3s ease;
+  }
+
+  .finance-input-group {
+    margin-bottom: 16px;
+  }
+
+  .finance-input-group label {
+    display: block;
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--muted);
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+
+  .finance-input {
+    width: 100%;
+    background: var(--calc-display);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .95rem;
+    color: var(--text);
+    outline: none;
+    transition: border-color .2s;
+  }
+
+  .finance-input:focus {
+    border-color: var(--accent);
+  }
+
+  .finance-result-box {
+    margin-top: 20px;
+    background: var(--calc-display);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+
+  .finance-result-label {
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .finance-result-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: var(--green);
+  }
+
+  .finance-breakdown {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  .breakdown-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    font-size: .88rem;
+  }
+
+  .breakdown-item span:first-child {
+    color: var(--muted);
+  }
+
+  .breakdown-item span:last-child {
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+  }
+
+  /* ========================================
+     ANALOG CLOCK STYLES
+     ======================================== */
+  .clock-container {
+    max-width: 500px;
+    margin: 0 auto;
+  }
+
+  .clock-card {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 20px;
+    padding: 32px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.4);
+  }
+
+  .clock-header {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+
+  .clock-header h2 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+
+  .clock-header p {
+    font-size: .85rem;
+    color: var(--muted);
+  }
+
+  .analog-clock {
+    width: 300px;
+    height: 300px;
+    margin: 0 auto 24px;
+    position: relative;
+    background: var(--calc-display);
+    border: 4px solid var(--border);
+    border-radius: 50%;
+    box-shadow: inset 0 0 20px rgba(0,0,0,.3);
+  }
+
+  .clock-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 12px;
+    height: 12px;
+    background: var(--accent);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+  }
+
+  .clock-number {
+    position: absolute;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text);
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .hand {
+    position: absolute;
+    bottom: 50%;
+    left: 50%;
+    transform-origin: bottom center;
+    border-radius: 4px 4px 0 0;
+    cursor: grab;
+    transition: background .2s;
+  }
+
+  .hand:active {
+    cursor: grabbing;
+  }
+
+  .hour-hand {
+    width: 6px;
+    height: 80px;
+    background: var(--accent);
+    margin-left: -3px;
+  }
+
+  .minute-hand {
+    width: 4px;
+    height: 110px;
+    background: var(--green);
+    margin-left: -2px;
+  }
+
+  .time-display {
+    background: var(--calc-display);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+  }
+
+  .digital-time {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--green);
+    margin-bottom: 8px;
+  }
+
+  .time-description {
+    font-size: .88rem;
+    color: var(--muted);
+  }
+
+  .clock-controls {
+    margin-top: 16px;
+    display: flex;
+    gap: 8px;
+  }
+
+  .clock-btn {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: .82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+
+  .clock-btn.primary {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .clock-btn.secondary {
+    background: var(--surface2);
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+
+  .clock-btn:hover {
+    transform: translateY(-1px);
+  }
+
+  /* ========================================
+     CONVERTER STYLES
+     ======================================== */
+  .converter-container {
+    max-width: 560px;
+    margin: 0 auto;
+  }
+
+  .category-tabs {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 6px;
+  }
+  .cat-tab {
+    padding: 12px 8px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-family: inherit;
+    font-size: .84rem;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all .2s;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+  .cat-tab:hover { 
+    color: var(--text); 
+    background: var(--surface2); 
+  }
+  .cat-tab.active {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .converter-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 28px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.4);
+  }
+
+  .converter {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .unit-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .unit-group label {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 10px;
+  }
+  input[type="number"] {
+    flex: 1;
+    background: var(--calc-display);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.1rem;
+    color: var(--text);
+    outline: none;
+    transition: border-color .2s;
+  }
+  input[type="number"]:focus { border-color: var(--accent); }
+
+  select {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-family: inherit;
+    font-size: .92rem;
+    color: var(--text);
+    cursor: pointer;
+    outline: none;
+    transition: border-color .2s;
+  }
+  select:focus { border-color: var(--accent); }
+
+  .swap-row {
+    display: flex;
+    justify-content: center;
+  }
+  .swap-btn {
+    background: var(--accent);
+    border: 2px solid var(--border);
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all .2s;
+    color: #fff;
+    font-size: 1.4rem;
+    font-weight: 700;
+  }
+  .swap-btn:hover {
+    background: var(--accent2);
+    transform: rotate(180deg);
+  }
+
+  .conv-result {
+    background: var(--calc-display);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 8px;
+    min-height: 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .conv-result-label {
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .conv-result-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: var(--green);
+    word-break: break-all;
+  }
+  .conv-result-formula {
+    font-size: .76rem;
+    color: var(--muted);
+    margin-top: 8px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .quick-conversions {
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+  }
+  .quick-conversions h3 {
+    font-size: .82rem;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+  .quick-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .quick-item {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: .84rem;
+    font-family: 'JetBrains Mono', monospace;
+    display: flex;
+    justify-content: space-between;
+  }
+  .quick-item span:first-child { color: var(--muted); }
+  .quick-item span:last-child { color: var(--text); font-weight: 500; }
+
+  @media (max-width: 600px) {
+    .app-header { padding: 16px 20px; }
+    .app-header h1 { font-size: 1.3rem; }
+    .main-nav { 
+      padding: 0 12px; 
+      top: 70px;
+    }
+    .main-nav button { 
+      padding: 12px 12px; 
+      font-size: .82rem;
+    }
+    .content { padding: 24px 16px; }
+    .category-tabs { grid-template-columns: repeat(2, 1fr); }
+    .calculator, .converter-card { padding: 20px; }
+    .result, .conv-result-value { font-size: 1.4rem; }
+    .calc-btn { padding: 14px 6px; font-size: .8rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- APP HEADER -->
+<div class="app-header">
+  <h1>CalcHub</h1>
+  <p>Your all-in-one calculation toolkit</p>
+</div>
+
+<!-- MAIN NAVIGATION -->
+<div class="main-nav">
+  <button class="main-nav-btn active" data-view="simple">➕ Simple</button>
+  <button class="main-nav-btn" data-view="scientific">🔬 Scientific</button>
+  <button class="main-nav-btn" data-view="solver">📐 Solver</button>
+  <button class="main-nav-btn" data-view="converter">🔄 Converter</button>
+  <button class="main-nav-btn" data-view="finance">💰 Finance</button>
+  <button class="main-nav-btn" data-view="clock">🕐 Clock</button>
+</div>
+
+<!-- CONTENT AREA -->
+<div class="content">
+  
+  <!-- ========================================
+       SIMPLE CALCULATOR VIEW
+       ======================================== -->
+  <div class="view active" id="simple">
+    <div class="simple-calc-container">
+      <div class="simple-calc">
+        <div class="calc-header">
+          <h2>Simple Calculator</h2>
+          <p>Basic arithmetic operations</p>
+        </div>
+
+        <div class="simple-display">
+          <div class="simple-expression" id="simpleExpression"></div>
+          <div class="simple-result" id="simpleResult">0</div>
+        </div>
+
+        <div class="simple-buttons">
+          <button class="simple-btn clear" data-simple-action="clear">C</button>
+          <button class="simple-btn" data-simple-action="backspace">⌫</button>
+          <button class="simple-btn op" data-simple-action="percent">%</button>
+          <button class="simple-btn op" data-simple-op="/">÷</button>
+
+          <button class="simple-btn" data-simple-num="7">7</button>
+          <button class="simple-btn" data-simple-num="8">8</button>
+          <button class="simple-btn" data-simple-num="9">9</button>
+          <button class="simple-btn op" data-simple-op="*">×</button>
+
+          <button class="simple-btn" data-simple-num="4">4</button>
+          <button class="simple-btn" data-simple-num="5">5</button>
+          <button class="simple-btn" data-simple-num="6">6</button>
+          <button class="simple-btn op" data-simple-op="-">−</button>
+
+          <button class="simple-btn" data-simple-num="1">1</button>
+          <button class="simple-btn" data-simple-num="2">2</button>
+          <button class="simple-btn" data-simple-num="3">3</button>
+          <button class="simple-btn op" data-simple-op="+">+</button>
+
+          <button class="simple-btn zero" data-simple-num="0">0</button>
+          <button class="simple-btn" data-simple-num=".">.</button>
+          <button class="simple-btn equals" data-simple-action="equals">=</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================
+       SCIENTIFIC CALCULATOR VIEW
+       ======================================== -->
+  <div class="view" id="scientific">
+    <div class="calculator-container">
+      <div class="calculator">
+        <div class="calc-header">
+          <h2>Scientific</h2>
+          <p>Advanced Calculator</p>
+        </div>
+
+        <div class="display">
+          <div class="expression" id="expression"></div>
+          <div class="result" id="calcResult">0</div>
+        </div>
+
+        <div class="mode-toggle">
+          <button id="btnDeg" class="active">Deg</button>
+          <button id="btnRad">Rad</button>
+        </div>
+
+        <div class="buttons">
+          <!-- row 1 -->
+          <button class="calc-btn btn-function" data-fn="sin">sin</button>
+          <button class="calc-btn btn-function" data-fn="cos">cos</button>
+          <button class="calc-btn btn-function" data-fn="tan">tan</button>
+          <button class="calc-btn btn-function" data-fn="log">log</button>
+          <button class="calc-btn btn-function" data-fn="ln">ln</button>
+
+          <!-- row 2 -->
+          <button class="calc-btn btn-function" data-fn="sqrt">√</button>
+          <button class="calc-btn btn-function" data-fn="pow">x²</button>
+          <button class="calc-btn btn-function" data-fn="exp">eˣ</button>
+          <button class="calc-btn btn-function" data-fn="fact">x!</button>
+          <button class="calc-btn btn-clear" data-action="clear">AC</button>
+
+          <!-- row 3 -->
+          <button class="calc-btn btn-function" data-const="pi">π</button>
+          <button class="calc-btn btn-function" data-const="e">e</button>
+          <button class="calc-btn btn-operator" data-op="(">(</button>
+          <button class="calc-btn btn-operator" data-op=")">)</button>
+          <button class="calc-btn btn-operator" data-op="/">÷</button>
+
+          <!-- row 4 -->
+          <button class="calc-btn" data-num="7">7</button>
+          <button class="calc-btn" data-num="8">8</button>
+          <button class="calc-btn" data-num="9">9</button>
+          <button class="calc-btn btn-operator" data-op="*">×</button>
+          <button class="calc-btn btn-function" data-fn="inv">1/x</button>
+
+          <!-- row 5 -->
+          <button class="calc-btn" data-num="4">4</button>
+          <button class="calc-btn" data-num="5">5</button>
+          <button class="calc-btn" data-num="6">6</button>
+          <button class="calc-btn btn-operator" data-op="-">−</button>
+          <button class="calc-btn btn-function" data-fn="abs">|x|</button>
+
+          <!-- row 6 -->
+          <button class="calc-btn" data-num="1">1</button>
+          <button class="calc-btn" data-num="2">2</button>
+          <button class="calc-btn" data-num="3">3</button>
+          <button class="calc-btn btn-operator" data-op="+">+</button>
+          <button class="calc-btn btn-function" data-fn="neg">+/−</button>
+
+          <!-- row 7 -->
+          <button class="calc-btn" data-num="0">0</button>
+          <button class="calc-btn" data-num=".">.</button>
+          <button class="calc-btn btn-operator" data-op="^">xʸ</button>
+          <button class="calc-btn btn-equals" data-action="equals">=</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================
+       CONVERTER VIEW
+       ======================================== -->
+  <div class="view" id="converter">
+    <div class="converter-container">
+      <div class="category-tabs">
+        <button class="cat-tab active" data-category="length">Length</button>
+        <button class="cat-tab" data-category="weight">Weight</button>
+        <button class="cat-tab" data-category="volume">Volume</button>
+        <button class="cat-tab" data-category="temp">Temp</button>
+      </div>
+
+      <div class="converter-card">
+        <div class="converter">
+          <!-- FROM -->
+          <div class="unit-group">
+            <label>From</label>
+            <div class="input-row">
+              <input type="number" id="inputValue" placeholder="Enter value" step="any" value="1" />
+              <select id="fromUnit"></select>
+            </div>
+          </div>
+
+          <!-- SWAP -->
+          <div class="swap-row">
+            <button class="swap-btn" id="swapBtn">⇅</button>
+          </div>
+
+          <!-- TO -->
+          <div class="unit-group">
+            <label>To</label>
+            <div class="input-row">
+              <select id="toUnit"></select>
+            </div>
+          </div>
+
+          <!-- RESULT -->
+          <div class="conv-result">
+            <div class="conv-result-label">Result</div>
+            <div class="conv-result-value" id="convResultValue">—</div>
+            <div class="conv-result-formula" id="convResultFormula"></div>
+          </div>
+        </div>
+
+        <!-- QUICK CONVERSIONS -->
+        <div class="quick-conversions">
+          <h3>Common Conversions</h3>
+          <div class="quick-list" id="quickList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================
+       EQUATION SOLVER VIEW
+       ======================================== -->
+  <div class="view" id="solver">
+    <div class="solver-container">
+      <div class="solver-card">
+        <div class="solver-header">
+          <h2>Equation Solver</h2>
+          <p>Enter an equation and solve for x<br/>
+          <small style="opacity:.7">Use +, -, *, / for operations. Example: 2*x + 5 = 15</small></p>
+        </div>
+
+        <div class="equation-input-group">
+          <label>Enter Equation</label>
+          <input type="text" class="equation-input" id="equationInput" placeholder="e.g., 3*x - 7 = 14" />
+        </div>
+
+        <button class="solve-btn" id="solveBtn">Solve Equation</button>
+
+        <div class="solution-box" id="solutionBox">
+          <div class="solution-title">Solution</div>
+          <div class="solution-result" id="solutionResult"></div>
+          
+          <div class="solution-steps">
+            <h4>Step-by-Step Solution</h4>
+            <div id="solutionSteps"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================
+       FINANCE CALCULATOR VIEW
+       ======================================== -->
+  <div class="view" id="finance">
+    <div class="finance-container">
+      <div class="finance-tabs">
+        <button class="finance-tab active" data-finance="interest">Interest</button>
+        <button class="finance-tab" data-finance="tax">Tax</button>
+        <button class="finance-tab" data-finance="tip">Tip</button>
+        <button class="finance-tab" data-finance="discount">Discount</button>
+      </div>
+
+      <div class="finance-card">
+        <!-- INTEREST CALCULATOR -->
+        <div class="finance-section active" id="financeInterest">
+          <div class="calc-header">
+            <h2>Interest Calculator</h2>
+            <p>Calculate simple & compound interest</p>
+          </div>
+
+          <div class="finance-input-group">
+            <label>Principal Amount ($)</label>
+            <input type="number" class="finance-input" id="principal" value="1000" step="any" />
+          </div>
+
+          <div class="finance-input-group">
+            <label>Interest Rate (%)</label>
+            <input type="number" class="finance-input" id="interestRate" value="5" step="any" />
+          </div>
+
+          <div class="finance-input-group">
+            <label>Time Period (years)</label>
+            <input type="number" class="finance-input" id="timePeriod" value="1" step="any" />
+          </div>
+
+          <div class="finance-input-group">
+            <label>Compound Frequency</label>
+            <select class="finance-input" id="compoundFreq">
+              <option value="1">Annually</option>
+              <option value="2">Semi-annually</option>
+              <option value="4">Quarterly</option>
+              <option value="12">Monthly</option>
+              <option value="365">Daily</option>
+            </select>
+          </div>
+
+          <div class="finance-result-box">
+            <div class="finance-result-label">Total Amount (Compound)</div>
+            <div class="finance-result-value" id="interestTotal">$0.00</div>
+            <div class="finance-breakdown">
+              <div class="breakdown-item">
+                <span>Principal</span>
+                <span id="interestPrincipal">$0.00</span>
+              </div>
+              <div class="breakdown-item">
+                <span>Interest Earned</span>
+                <span id="interestEarned">$0.00</span>
+              </div>
+              <div class="breakdown-item">
+                <span>Simple Interest</span>
+                <span id="simpleInterest">$0.00</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAX CALCULATOR -->
+        <div class="finance-section" id="financeTax">
+          <div class="calc-header">
+            <h2>Tax Calculator</h2>
+            <p>Calculate sales tax and totals</p>
+          </div>
+
+          <div class="finance-input-group">
+            <label>Price Before Tax ($)</label>
+            <input type="number" class="finance-input" id="preTaxPrice" value="100" step="any" />
+          </div>
+
+          <div class="finance-input-group">
+            <label>Tax Rate (%)</label>
+            <input type="number" class="finance-input" id="taxRate" value="8.5" step="any" />
+          </div>
+
+          <div class="finance-result-box">
+            <div class="finance-result-label">Total with Tax</div>
+            <div class="finance-result-value" id="taxTotal">$0.00</div>
+            <div class="finance-breakdown">
+              <div class="breakdown-item">
+                <span>Subtotal</span>
+                <span id="taxSubtotal">$0.00</span>
+              </div>
+              <div class="breakdown-item">
+                <span>Tax Amount</span>
+                <span id="taxAmount">$0.00</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TIP CALCULATOR -->
+        <div class="finance-section" id="financeTip">
+          <div class="calc-header">
+            <h2>Tip Calculator</h2>
+            <p>Calculate tips and split bills</p>
+          </div>
+
+          <div class="finance-input-group">
+            <label>Bill Amount ($)</label>
+            <input type="number" class="finance-input" id="billAmount" value="50" step="any" />
+          </div>
+
+          <div class="finance-input-group">
+            <label>Tip Percentage (%)</label>
+            <input type="number" class="finance-input" id="tipPercent" value="18" step="any" />
+          </div>
+
+          <div class="finance-input-group">
+            <label>Number of People</label>
+            <input type="number" class="finance-input" id="numPeople" value="1" min="1" step="1" />
+          </div>
+
+          <div class="finance-result-box">
+            <div class="finance-result-label">Total per Person</div>
+            <div class="finance-result-value" id="tipPerPerson">$0.00</div>
+            <div class="finance-breakdown">
+              <div class="breakdown-item">
+                <span>Bill Total</span>
+                <span id="tipBillTotal">$0.00</span>
+              </div>
+              <div class="breakdown-item">
+                <span>Tip Amount</span>
+                <span id="tipAmountTotal">$0.00</span>
+              </div>
+              <div class="breakdown-item">
+                <span>Grand Total</span>
+                <span id="tipGrandTotal">$0.00</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- DISCOUNT CALCULATOR -->
+        <div class="finance-section" id="financeDiscount">
+          <div class="calc-header">
+            <h2>Discount Calculator</h2>
+            <p>Calculate sale prices and savings</p>
+          </div>
+
+          <div class="finance-input-group">
+            <label>Original Price ($)</label>
+            <input type="number" class="finance-input" id="originalPrice" value="100" step="any" />
+          </div>
+
+          <div class="finance-input-group">
+            <label>Discount (%)</label>
+            <input type="number" class="finance-input" id="discountPercent" value="25" step="any" />
+          </div>
+
+          <div class="finance-result-box">
+            <div class="finance-result-label">Final Price</div>
+            <div class="finance-result-value" id="discountFinal">$0.00</div>
+            <div class="finance-breakdown">
+              <div class="breakdown-item">
+                <span>Original Price</span>
+                <span id="discountOriginal">$0.00</span>
+              </div>
+              <div class="breakdown-item">
+                <span>You Save</span>
+                <span id="discountSavings">$0.00</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================
+       ANALOG CLOCK VIEW
+       ======================================== -->
+  <div class="view" id="clock">
+    <div class="clock-container">
+      <div class="clock-card">
+        <div class="clock-header">
+          <h2>Analog Clock Reader</h2>
+          <p>Drag the clock hands to learn time</p>
+        </div>
+
+        <div class="analog-clock" id="analogClock">
+          <div class="clock-center"></div>
+          <div class="hour-hand hand" id="hourHand"></div>
+          <div class="minute-hand hand" id="minuteHand"></div>
+        </div>
+
+        <div class="time-display">
+          <div class="digital-time" id="digitalTime">12:00</div>
+          <div class="time-description" id="timeDescription">Twelve o'clock</div>
+        </div>
+
+        <div class="clock-controls">
+          <button class="clock-btn primary" id="setCurrentTime">Set Current Time</button>
+          <button class="clock-btn secondary" id="randomTime">Random Time</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  // ========================================
+  // MAIN APP NAVIGATION
+  // ========================================
+  document.querySelectorAll('.main-nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelector('.main-nav-btn.active').classList.remove('active');
+      btn.classList.add('active');
+      
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.getElementById(btn.dataset.view).classList.add('active');
+    });
+  });
+
+  // ========================================
+  // SIMPLE CALCULATOR LOGIC
+  // ========================================
+  const simpleExpressionEl = document.getElementById('simpleExpression');
+  const simpleResultEl = document.getElementById('simpleResult');
+  let simpleExpr = '';
+  let simpleLastResult = '';
+
+  document.querySelector('.simple-buttons').addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+
+    if (btn.dataset.simpleNum !== undefined) {
+      simpleExpr += btn.dataset.simpleNum;
+      updateSimpleDisplay();
+    } else if (btn.dataset.simpleOp) {
+      if (simpleExpr && !/[\+\-\*\/]$/.test(simpleExpr)) {
+        simpleExpr += btn.dataset.simpleOp;
+        updateSimpleDisplay();
+      }
+    } else if (btn.dataset.simpleAction === 'clear') {
+      simpleExpr = '';
+      simpleLastResult = '';
+      updateSimpleDisplay();
+      simpleResultEl.textContent = '0';
+    } else if (btn.dataset.simpleAction === 'backspace') {
+      simpleExpr = simpleExpr.slice(0, -1);
+      updateSimpleDisplay();
+    } else if (btn.dataset.simpleAction === 'percent') {
+      if (simpleExpr) {
+        try {
+          const val = evaluateSimple(simpleExpr);
+          simpleExpr = String(val / 100);
+          updateSimpleDisplay();
+          simpleResultEl.textContent = formatSimpleNumber(val / 100);
+        } catch (e) {}
+      }
+    } else if (btn.dataset.simpleAction === 'equals') {
+      calculateSimple();
+    }
+  });
+
+  function updateSimpleDisplay() {
+    simpleExpressionEl.textContent = simpleExpr || '';
+  }
+
+  function calculateSimple() {
+    if (!simpleExpr.trim()) return;
+    try {
+      const result = evaluateSimple(simpleExpr);
+      simpleResultEl.textContent = formatSimpleNumber(result);
+      simpleResultEl.classList.remove('error');
+      simpleLastResult = String(result);
+    } catch (err) {
+      simpleResultEl.textContent = 'Error';
+      simpleResultEl.classList.add('error');
+    }
+  }
+
+  function evaluateSimple(expr) {
+    // Simple eval with PEMDAS support
+    const result = Function('"use strict"; return (' + expr + ')')();
+    if (!isFinite(result)) throw new Error('Invalid');
+    return result;
+  }
+
+  function formatSimpleNumber(num) {
+    const rounded = Math.round(num * 1e10) / 1e10;
+    if (Number.isInteger(rounded)) return String(rounded);
+    if (Math.abs(rounded) > 1e9) return rounded.toExponential(4);
+    return String(rounded);
+  }
+
+  // ========================================
+  // SCIENTIFIC CALCULATOR LOGIC
+  // ========================================
+  const expressionEl = document.getElementById('expression');
+  const calcResultEl = document.getElementById('calcResult');
+  const btnDeg       = document.getElementById('btnDeg');
+  const btnRad       = document.getElementById('btnRad');
+
+  let expression = '';
+  let angleMode  = 'deg';
+
+  btnDeg.addEventListener('click', () => { 
+    angleMode = 'deg'; 
+    btnDeg.classList.add('active'); 
+    btnRad.classList.remove('active'); 
+  });
+  btnRad.addEventListener('click', () => { 
+    angleMode = 'rad'; 
+    btnRad.classList.add('active'); 
+    btnDeg.classList.remove('active'); 
+  });
+
+  document.querySelector('.buttons').addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+
+    if (btn.dataset.num !== undefined) {
+      appendToExpression(btn.dataset.num);
+    } else if (btn.dataset.op) {
+      appendToExpression(btn.dataset.op);
+    } else if (btn.dataset.const) {
+      if (btn.dataset.const === 'pi') appendToExpression('π');
+      if (btn.dataset.const === 'e')  appendToExpression('e');
+    } else if (btn.dataset.fn) {
+      handleFunction(btn.dataset.fn);
+    } else if (btn.dataset.action === 'clear') {
+      clearAll();
+    } else if (btn.dataset.action === 'equals') {
+      calculate();
+    }
+  });
+
+  function appendToExpression(val) {
+    expression += val;
+    updateDisplay();
+  }
+
+  function handleFunction(fn) {
+    switch (fn) {
+      case 'sin':
+      case 'cos':
+      case 'tan':
+      case 'log':
+      case 'ln':
+      case 'sqrt':
+        expression += fn + '(';
+        break;
+      case 'pow':   expression += '^2';      break;
+      case 'exp':   expression += 'e^';      break;
+      case 'fact':  expression += '!';       break;
+      case 'inv':   expression += '^(-1)';   break;
+      case 'abs':   expression += 'abs(';    break;
+      case 'neg':
+        expression = toggleSign(expression);
+        break;
+    }
+    updateDisplay();
+  }
+
+  function toggleSign(expr) {
+    const trimmed = expr.trim();
+    if (!trimmed) return expr;
+    const last = trimmed[trimmed.length - 1];
+    if (/[\d\)]/.test(last)) return expr + '*(-1)';
+    return expr;
+  }
+
+  function clearAll() {
+    expression = '';
+    updateDisplay();
+    calcResultEl.textContent = '0';
+    calcResultEl.classList.remove('error');
+  }
+
+  function updateDisplay() {
+    expressionEl.textContent = expression || '';
+  }
+
+  function calculate() {
+    if (!expression.trim()) return;
+    try {
+      const result = evaluateExpression(expression);
+      calcResultEl.textContent = formatNumber(result);
+      calcResultEl.classList.remove('error');
+    } catch (err) {
+      calcResultEl.textContent = 'Error';
+      calcResultEl.classList.add('error');
+    }
+  }
+
+  function evaluateExpression(expr) {
+    expr = expr.replace(/π/g, Math.PI);
+    expr = expr.replace(/e(?![a-z])/g, Math.E);
+
+    expr = expr.replace(/sin\(/g, angleMode === 'deg' ? '_sin(' : 'Math.sin(');
+    expr = expr.replace(/cos\(/g, angleMode === 'deg' ? '_cos(' : 'Math.cos(');
+    expr = expr.replace(/tan\(/g, angleMode === 'deg' ? '_tan(' : 'Math.tan(');
+    expr = expr.replace(/log\(/g, '_log(');
+    expr = expr.replace(/ln\(/g, 'Math.log(');
+    expr = expr.replace(/sqrt\(/g, 'Math.sqrt(');
+    expr = expr.replace(/abs\(/g, 'Math.abs(');
+    expr = expr.replace(/(\d+)!/g, '_fact($1)');
+    expr = expr.replace(/\^/g, '**');
+
+    const _sin  = (x) => Math.sin(x * Math.PI / 180);
+    const _cos  = (x) => Math.cos(x * Math.PI / 180);
+    const _tan  = (x) => Math.tan(x * Math.PI / 180);
+    const _log  = (x) => Math.log10(x);
+    const _fact = (n) => {
+      n = Math.floor(n);
+      if (n < 0) throw new Error('Factorial of negative');
+      if (n === 0 || n === 1) return 1;
+      let res = 1;
+      for (let i = 2; i <= n; i++) res *= i;
+      return res;
+    };
+
+    const result = Function('"use strict"; return (' + expr + ')')();
+    if (!isFinite(result)) throw new Error('Infinite or NaN');
+    return result;
+  }
+
+  function formatNumber(num) {
+    const rounded = Math.round(num * 1e10) / 1e10;
+    if (Number.isInteger(rounded)) return String(rounded);
+    if (Math.abs(rounded) > 1e9 || (Math.abs(rounded) < 1e-6 && rounded !== 0)) {
+      return rounded.toExponential(6);
+    }
+    return String(rounded);
+  }
+
+  document.addEventListener('keydown', (e) => {
+    const activeView = document.querySelector('.view.active').id;
+    
+    if (activeView === 'simple') {
+      if (e.key >= '0' && e.key <= '9') { simpleExpr += e.key; updateSimpleDisplay(); }
+      else if (e.key === '.') { simpleExpr += '.'; updateSimpleDisplay(); }
+      else if (e.key === '+') { simpleExpr += '+'; updateSimpleDisplay(); }
+      else if (e.key === '-') { simpleExpr += '-'; updateSimpleDisplay(); }
+      else if (e.key === '*') { simpleExpr += '*'; updateSimpleDisplay(); }
+      else if (e.key === '/') { simpleExpr += '/'; updateSimpleDisplay(); }
+      else if (e.key === 'Enter' || e.key === '=') calculateSimple();
+      else if (e.key === 'Escape' || e.key === 'Delete') {
+        simpleExpr = ''; simpleLastResult = ''; updateSimpleDisplay(); simpleResultEl.textContent = '0';
+      }
+      else if (e.key === 'Backspace') { simpleExpr = simpleExpr.slice(0, -1); updateSimpleDisplay(); }
+    } else if (activeView === 'scientific') {
+      if (e.key >= '0' && e.key <= '9') appendToExpression(e.key);
+      else if (e.key === '.') appendToExpression('.');
+      else if (e.key === '+') appendToExpression('+');
+      else if (e.key === '-') appendToExpression('-');
+      else if (e.key === '*') appendToExpression('*');
+      else if (e.key === '/') appendToExpression('/');
+      else if (e.key === '(') appendToExpression('(');
+      else if (e.key === ')') appendToExpression(')');
+      else if (e.key === '^') appendToExpression('^');
+      else if (e.key === 'Enter' || e.key === '=') calculate();
+      else if (e.key === 'Escape' || e.key === 'Delete') clearAll();
+      else if (e.key === 'Backspace') {
+        expression = expression.slice(0, -1);
+        updateDisplay();
+      }
+    }
+  });
+
+  // ========================================
+  // EQUATION SOLVER LOGIC
+  // ========================================
+  const equationInput = document.getElementById('equationInput');
+  const solveBtn = document.getElementById('solveBtn');
+  const solutionBox = document.getElementById('solutionBox');
+  const solutionResult = document.getElementById('solutionResult');
+  const solutionSteps = document.getElementById('solutionSteps');
+
+  solveBtn.addEventListener('click', solveEquation);
+  equationInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') solveEquation();
+  });
+
+  function solveEquation() {
+    const equation = equationInput.value.trim();
+    if (!equation) return;
+
+    try {
+      // Parse equation (format: expression = value)
+      if (!equation.includes('=')) {
+        throw new Error('Equation must contain an equals sign (=)');
+      }
+
+      const [leftSide, rightSide] = equation.split('=').map(s => s.trim());
+      
+      // Simple linear equation solver (handles ax + b = c format)
+      const solution = solveLinearEquation(leftSide, rightSide);
+      
+      solutionResult.textContent = `x = ${solution.toFixed(4)}`;
+      solutionBox.classList.add('visible');
+      
+      // Generate steps
+      generateSolutionSteps(leftSide, rightSide, solution);
+    } catch (error) {
+      solutionResult.textContent = 'Error: ' + error.message;
+      solutionBox.classList.add('visible');
+      solutionSteps.innerHTML = '';
+    }
+  }
+
+  function solveLinearEquation(left, right) {
+    // Move everything to left side: left - right = 0
+    // Then solve for x
+    
+    // Evaluate right side first (should be a number)
+    const rightValue = evaluateSimple(right.replace(/x/gi, '0'));
+    
+    // Try different x values and use numerical methods
+    // For simple cases, try to isolate x algebraically
+    
+    // Test if it's simple format like "2*x + 5" or "3*x - 7"
+    const terms = left.match(/([+-]?\d*\.?\d*)\*?x|([+-]?\d+\.?\d*)/g) || [];
+    
+    let xCoeff = 0;
+    let constant = 0;
+    
+    for (let term of terms) {
+      if (term.includes('x')) {
+        // Extract coefficient
+        let coef = term.replace(/\*?x/gi, '').trim();
+        if (coef === '' || coef === '+') coef = '1';
+        if (coef === '-') coef = '-1';
+        xCoeff += parseFloat(coef);
+      } else {
+        constant += parseFloat(term);
+      }
+    }
+    
+    // Solve: xCoeff * x + constant = rightValue
+    // x = (rightValue - constant) / xCoeff
+    if (xCoeff === 0) throw new Error('No variable x found or equation is not linear');
+    
+    return (rightValue - constant) / xCoeff;
+  }
+
+  function generateSolutionSteps(left, right, solution) {
+    const steps = [];
+    steps.push(`Original equation: ${left} = ${right}`);
+    steps.push(`Isolate the variable x`);
+    steps.push(`Solve for x algebraically`);
+    steps.push(`Solution: x = ${solution.toFixed(4)}`);
+    
+    // Verify
+    const verification = left.replace(/x/gi, solution);
+    try {
+      const result = evaluateSimple(verification);
+      const rightValue = evaluateSimple(right);
+      steps.push(`Verification: ${result.toFixed(4)} ≈ ${rightValue.toFixed(4)}`);
+    } catch (e) {}
+    
+    solutionSteps.innerHTML = steps.map((step, i) => 
+      `<div class="step"><span class="step-num">${i + 1}.</span>${step}</div>`
+    ).join('');
+  }
+
+  // ========================================
+  // FINANCE CALCULATORS LOGIC
+  // ========================================
+  
+  // Finance tab switching
+  document.querySelectorAll('.finance-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelector('.finance-tab.active').classList.remove('active');
+      tab.classList.add('active');
+      
+      document.querySelectorAll('.finance-section').forEach(section => section.classList.remove('active'));
+      document.getElementById('finance' + tab.dataset.finance.charAt(0).toUpperCase() + tab.dataset.finance.slice(1)).classList.add('active');
+    });
+  });
+
+  // Interest Calculator
+  const principal = document.getElementById('principal');
+  const interestRate = document.getElementById('interestRate');
+  const timePeriod = document.getElementById('timePeriod');
+  const compoundFreq = document.getElementById('compoundFreq');
+
+  [principal, interestRate, timePeriod, compoundFreq].forEach(input => {
+    input.addEventListener('input', calculateInterest);
+  });
+
+  function calculateInterest() {
+    const P = parseFloat(principal.value) || 0;
+    const r = parseFloat(interestRate.value) / 100 || 0;
+    const t = parseFloat(timePeriod.value) || 0;
+    const n = parseFloat(compoundFreq.value) || 1;
+
+    // Compound Interest: A = P(1 + r/n)^(nt)
+    const compoundAmount = P * Math.pow(1 + r/n, n*t);
+    const compoundInterest = compoundAmount - P;
+
+    // Simple Interest: I = Prt
+    const simpleInterestAmount = P * r * t;
+
+    document.getElementById('interestTotal').textContent = '$' + compoundAmount.toFixed(2);
+    document.getElementById('interestPrincipal').textContent = '$' + P.toFixed(2);
+    document.getElementById('interestEarned').textContent = '$' + compoundInterest.toFixed(2);
+    document.getElementById('simpleInterest').textContent = '$' + simpleInterestAmount.toFixed(2);
+  }
+
+  // Tax Calculator
+  const preTaxPrice = document.getElementById('preTaxPrice');
+  const taxRate = document.getElementById('taxRate');
+
+  [preTaxPrice, taxRate].forEach(input => {
+    input.addEventListener('input', calculateTax);
+  });
+
+  function calculateTax() {
+    const price = parseFloat(preTaxPrice.value) || 0;
+    const rate = parseFloat(taxRate.value) / 100 || 0;
+    
+    const taxAmount = price * rate;
+    const total = price + taxAmount;
+
+    document.getElementById('taxTotal').textContent = '$' + total.toFixed(2);
+    document.getElementById('taxSubtotal').textContent = '$' + price.toFixed(2);
+    document.getElementById('taxAmount').textContent = '$' + taxAmount.toFixed(2);
+  }
+
+  // Tip Calculator
+  const billAmount = document.getElementById('billAmount');
+  const tipPercent = document.getElementById('tipPercent');
+  const numPeople = document.getElementById('numPeople');
+
+  [billAmount, tipPercent, numPeople].forEach(input => {
+    input.addEventListener('input', calculateTip);
+  });
+
+  function calculateTip() {
+    const bill = parseFloat(billAmount.value) || 0;
+    const tip = parseFloat(tipPercent.value) / 100 || 0;
+    const people = parseFloat(numPeople.value) || 1;
+
+    const tipAmount = bill * tip;
+    const total = bill + tipAmount;
+    const perPerson = total / people;
+
+    document.getElementById('tipPerPerson').textContent = '$' + perPerson.toFixed(2);
+    document.getElementById('tipBillTotal').textContent = '$' + bill.toFixed(2);
+    document.getElementById('tipAmountTotal').textContent = '$' + tipAmount.toFixed(2);
+    document.getElementById('tipGrandTotal').textContent = '$' + total.toFixed(2);
+  }
+
+  // Discount Calculator
+  const originalPrice = document.getElementById('originalPrice');
+  const discountPercent = document.getElementById('discountPercent');
+
+  [originalPrice, discountPercent].forEach(input => {
+    input.addEventListener('input', calculateDiscount);
+  });
+
+  function calculateDiscount() {
+    const price = parseFloat(originalPrice.value) || 0;
+    const discount = parseFloat(discountPercent.value) / 100 || 0;
+
+    const savings = price * discount;
+    const final = price - savings;
+
+    document.getElementById('discountFinal').textContent = '$' + final.toFixed(2);
+    document.getElementById('discountOriginal').textContent = '$' + price.toFixed(2);
+    document.getElementById('discountSavings').textContent = '$' + savings.toFixed(2);
+  }
+
+  // Initialize finance calculators
+  calculateInterest();
+  calculateTax();
+  calculateTip();
+  calculateDiscount();
+
+  // ========================================
+  // ANALOG CLOCK LOGIC
+  // ========================================
+  const analogClock = document.getElementById('analogClock');
+  const hourHand = document.getElementById('hourHand');
+  const minuteHand = document.getElementById('minuteHand');
+  const digitalTime = document.getElementById('digitalTime');
+  const timeDescription = document.getElementById('timeDescription');
+  const setCurrentTimeBtn = document.getElementById('setCurrentTime');
+  const randomTimeBtn = document.getElementById('randomTime');
+
+  let currentHour = 12;
+  let currentMinute = 0;
+
+  // Add clock numbers
+  for (let i = 1; i <= 12; i++) {
+    const num = document.createElement('div');
+    num.className = 'clock-number';
+    num.textContent = i;
+    const angle = (i * 30 - 90) * Math.PI / 180;
+    const radius = 130;
+    num.style.left = (150 + radius * Math.cos(angle) - 15) + 'px';
+    num.style.top = (150 + radius * Math.sin(angle) - 15) + 'px';
+    analogClock.appendChild(num);
+  }
+
+  // Draggable hands
+  let isDragging = false;
+  let currentHand = null;
+
+  function startDrag(e, hand) {
+    isDragging = true;
+    currentHand = hand;
+    e.preventDefault();
+  }
+
+  function drag(e) {
+    if (!isDragging) return;
+    
+    const rect = analogClock.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    
+    const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+    const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+    
+    const angle = Math.atan2(clientY - centerY, clientX - centerX);
+    let degrees = angle * 180 / Math.PI + 90;
+    if (degrees < 0) degrees += 360;
+
+    if (currentHand === 'hour') {
+      currentHour = Math.round(degrees / 30);
+      if (currentHour === 0) currentHour = 12;
+    } else if (currentHand === 'minute') {
+      currentMinute = Math.round(degrees / 6);
+      if (currentMinute === 60) currentMinute = 0;
+    }
+
+    updateClock();
+  }
+
+  function stopDrag() {
+    isDragging = false;
+    currentHand = null;
+  }
+
+  hourHand.addEventListener('mousedown', (e) => startDrag(e, 'hour'));
+  minuteHand.addEventListener('mousedown', (e) => startDrag(e, 'minute'));
+  hourHand.addEventListener('touchstart', (e) => startDrag(e, 'hour'));
+  minuteHand.addEventListener('touchstart', (e) => startDrag(e, 'minute'));
+  
+  document.addEventListener('mousemove', drag);
+  document.addEventListener('touchmove', drag);
+  document.addEventListener('mouseup', stopDrag);
+  document.addEventListener('touchend', stopDrag);
+
+  function updateClock() {
+    const hourAngle = (currentHour % 12) * 30 + currentMinute * 0.5;
+    const minuteAngle = currentMinute * 6;
+
+    hourHand.style.transform = `rotate(${hourAngle}deg)`;
+    minuteHand.style.transform = `rotate(${minuteAngle}deg)`;
+
+    const hour12 = currentHour === 0 ? 12 : currentHour;
+    const ampm = currentHour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour12 > 12 ? hour12 - 12 : hour12;
+    
+    digitalTime.textContent = `${displayHour}:${String(currentMinute).padStart(2, '0')}`;
+    timeDescription.textContent = describeTime(displayHour, currentMinute);
+  }
+
+  function describeTime(hour, minute) {
+    const hourNames = ['twelve', 'one', 'two', 'three', 'four', 'five', 'six', 
+                       'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
+    
+    if (minute === 0) return `${hourNames[hour]} o'clock`;
+    if (minute === 15) return `quarter past ${hourNames[hour]}`;
+    if (minute === 30) return `half past ${hourNames[hour]}`;
+    if (minute === 45) return `quarter to ${hourNames[hour + 1] || 'one'}`;
+    if (minute < 30) return `${minute} minutes past ${hourNames[hour]}`;
+    return `${60 - minute} minutes to ${hourNames[hour + 1] || 'one'}`;
+  }
+
+  setCurrentTimeBtn.addEventListener('click', () => {
+    const now = new Date();
+    currentHour = now.getHours();
+    currentMinute = now.getMinutes();
+    updateClock();
+  });
+
+  randomTimeBtn.addEventListener('click', () => {
+    currentHour = Math.floor(Math.random() * 12) + 1;
+    currentMinute = Math.floor(Math.random() * 60);
+    updateClock();
+  });
+
+  // Initialize clock
+  updateClock();
+
+  // ========================================
+  // CONVERTER LOGIC
+  // ========================================
+  const categories = {
+    length: {
+      mm:  { name: 'Millimeters', toBase: 0.001 },
+      cm:  { name: 'Centimeters', toBase: 0.01 },
+      m:   { name: 'Meters', toBase: 1 },
+      km:  { name: 'Kilometers', toBase: 1000 },
+      in:  { name: 'Inches', toBase: 0.0254 },
+      ft:  { name: 'Feet', toBase: 0.3048 },
+      yd:  { name: 'Yards', toBase: 0.9144 },
+      mi:  { name: 'Miles', toBase: 1609.344 },
+    },
+    weight: {
+      mg:  { name: 'Milligrams', toBase: 0.000001 },
+      g:   { name: 'Grams', toBase: 0.001 },
+      kg:  { name: 'Kilograms', toBase: 1 },
+      ton: { name: 'Metric Tons', toBase: 1000 },
+      oz:  { name: 'Ounces', toBase: 0.0283495 },
+      lb:  { name: 'Pounds', toBase: 0.453592 },
+      st:  { name: 'Stones', toBase: 6.35029 },
+      ton_us: { name: 'US Tons', toBase: 907.185 },
+    },
+    volume: {
+      ml:  { name: 'Milliliters', toBase: 0.001 },
+      l:   { name: 'Liters', toBase: 1 },
+      tsp: { name: 'Teaspoons', toBase: 0.00492892 },
+      tbsp:{ name: 'Tablespoons', toBase: 0.0147868 },
+      floz:{ name: 'Fluid Ounces', toBase: 0.0295735 },
+      cup: { name: 'Cups', toBase: 0.236588 },
+      pt:  { name: 'Pints', toBase: 0.473176 },
+      qt:  { name: 'Quarts', toBase: 0.946353 },
+      gal: { name: 'Gallons', toBase: 3.78541 },
+    },
+    temp: {
+      c:   { name: 'Celsius' },
+      f:   { name: 'Fahrenheit' },
+      k:   { name: 'Kelvin' },
+    }
+  };
+
+  const quickExamples = {
+    length: [
+      { from: '1 m', to: '3.281 ft' },
+      { from: '1 km', to: '0.621 mi' },
+      { from: '1 in', to: '2.54 cm' },
+      { from: '1 mi', to: '1.609 km' },
+    ],
+    weight: [
+      { from: '1 kg', to: '2.205 lb' },
+      { from: '1 lb', to: '453.592 g' },
+      { from: '1 oz', to: '28.35 g' },
+      { from: '1 ton', to: '2204.62 lb' },
+    ],
+    volume: [
+      { from: '1 l', to: '33.814 fl oz' },
+      { from: '1 gal', to: '3.785 l' },
+      { from: '1 cup', to: '236.59 ml' },
+      { from: '1 ml', to: '0.034 fl oz' },
+    ],
+    temp: [
+      { from: '0 °C', to: '32 °F' },
+      { from: '100 °C', to: '212 °F' },
+      { from: '273.15 K', to: '0 °C' },
+      { from: '20 °C', to: '68 °F' },
+    ],
+  };
+
+  let currentCategory = 'length';
+
+  const inputValue      = document.getElementById('inputValue');
+  const fromUnit        = document.getElementById('fromUnit');
+  const toUnit          = document.getElementById('toUnit');
+  const swapBtn         = document.getElementById('swapBtn');
+  const convResultValue = document.getElementById('convResultValue');
+  const convResultFormula= document.getElementById('convResultFormula');
+  const quickList       = document.getElementById('quickList');
+
+  document.querySelectorAll('.cat-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelector('.cat-tab.active').classList.remove('active');
+      tab.classList.add('active');
+      currentCategory = tab.dataset.category;
+      populateUnits();
+      convert();
+      renderQuickList();
+    });
+  });
+
+  swapBtn.addEventListener('click', () => {
+    const temp = fromUnit.value;
+    fromUnit.value = toUnit.value;
+    toUnit.value = temp;
+    convert();
+  });
+
+  inputValue.addEventListener('input', convert);
+  fromUnit.addEventListener('change', convert);
+  toUnit.addEventListener('change', convert);
+
+  function populateUnits() {
+    const units = categories[currentCategory];
+    fromUnit.innerHTML = '';
+    toUnit.innerHTML = '';
+
+    Object.keys(units).forEach((key, idx) => {
+      const opt1 = document.createElement('option');
+      opt1.value = key;
+      opt1.textContent = units[key].name;
+      fromUnit.appendChild(opt1);
+
+      const opt2 = document.createElement('option');
+      opt2.value = key;
+      opt2.textContent = units[key].name;
+      toUnit.appendChild(opt2);
+
+      if (idx === 0) fromUnit.value = key;
+      if (idx === 1) toUnit.value = key;
+    });
+  }
+
+  function convert() {
+    const val = parseFloat(inputValue.value);
+    if (isNaN(val)) {
+      convResultValue.textContent = '—';
+      convResultFormula.textContent = '';
+      return;
+    }
+
+    const from = fromUnit.value;
+    const to   = toUnit.value;
+
+    let result, formula;
+
+    if (currentCategory === 'temp') {
+      result = convertTemp(val, from, to);
+      formula = getTempFormula(from, to);
+    } else {
+      const units = categories[currentCategory];
+      const fromBase = units[from].toBase;
+      const toBase   = units[to].toBase;
+      result = val * (fromBase / toBase);
+      formula = `${val} × ${(fromBase / toBase).toFixed(6)} = ${result.toFixed(6)}`;
+    }
+
+    convResultValue.textContent = formatConvNumber(result);
+    convResultFormula.textContent = formula;
+  }
+
+  function convertTemp(val, from, to) {
+    let celsius;
+    if (from === 'c') celsius = val;
+    else if (from === 'f') celsius = (val - 32) * 5/9;
+    else if (from === 'k') celsius = val - 273.15;
+
+    if (to === 'c') return celsius;
+    if (to === 'f') return celsius * 9/5 + 32;
+    if (to === 'k') return celsius + 273.15;
+  }
+
+  function getTempFormula(from, to) {
+    if (from === to) return 'Same unit';
+    if (from === 'c' && to === 'f') return '°C × 9/5 + 32';
+    if (from === 'f' && to === 'c') return '(°F − 32) × 5/9';
+    if (from === 'c' && to === 'k') return '°C + 273.15';
+    if (from === 'k' && to === 'c') return 'K − 273.15';
+    if (from === 'f' && to === 'k') return '(°F − 32) × 5/9 + 273.15';
+    if (from === 'k' && to === 'f') return '(K − 273.15) × 9/5 + 32';
+    return '';
+  }
+
+  function formatConvNumber(num) {
+    if (Math.abs(num) > 1e6 || (Math.abs(num) < 0.001 && num !== 0)) {
+      return num.toExponential(4);
+    }
+    const rounded = Math.round(num * 1e8) / 1e8;
+    return rounded.toLocaleString('en-US', { maximumFractionDigits: 8 });
+  }
+
+  function renderQuickList() {
+    const examples = quickExamples[currentCategory];
+    quickList.innerHTML = '';
+    examples.forEach(ex => {
+      const div = document.createElement('div');
+      div.className = 'quick-item';
+      div.innerHTML = `<span>${ex.from}</span><span>${ex.to}</span>`;
+      quickList.appendChild(div);
+    });
+  }
+
+  // init converter
+  populateUnits();
+  convert();
+  renderQuickList();
+})();
+</script>
+</body>
+</html>
