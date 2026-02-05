@@ -816,6 +816,185 @@
   }
 
   /* ========================================
+     GEOMETRY CALCULATOR STYLES
+     ======================================== */
+  .geometry-container {
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  .geometry-tabs {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 8px;
+    margin-bottom: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 6px;
+  }
+
+  .geometry-tab {
+    padding: 10px 12px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-family: inherit;
+    font-size: .8rem;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all .2s;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+
+  .geometry-tab:hover {
+    color: var(--text);
+    background: var(--surface2);
+  }
+
+  .geometry-tab.active {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .geometry-card {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 20px;
+    padding: 28px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.4);
+  }
+
+  .geometry-section {
+    display: none;
+  }
+
+  .geometry-section.active {
+    display: block;
+    animation: fadeIn .3s ease;
+  }
+
+  .geometry-header {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .geometry-header h3 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+
+  .geometry-header p {
+    font-size: .82rem;
+    color: var(--muted);
+  }
+
+  .geometry-visual {
+    background: var(--calc-display);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 180px;
+  }
+
+  .shape-svg {
+    max-width: 100%;
+    height: auto;
+  }
+
+  .geometry-inputs {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .geometry-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .geometry-input-group label {
+    font-size: .75rem;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  .geometry-input {
+    background: var(--calc-display);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .95rem;
+    color: var(--text);
+    outline: none;
+    transition: border-color .2s;
+  }
+
+  .geometry-input:focus {
+    border-color: var(--accent);
+  }
+
+  .geometry-results {
+    background: var(--calc-display);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+
+  .geometry-results h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+
+  .geometry-result-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .geometry-result-item:last-child {
+    border-bottom: none;
+  }
+
+  .geometry-result-label {
+    font-size: .88rem;
+    color: var(--text);
+  }
+
+  .geometry-result-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--green);
+  }
+
+  .formula-hint {
+    font-size: .75rem;
+    color: var(--muted);
+    font-style: italic;
+    margin-top: 4px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ========================================
      CONVERTER STYLES
      ======================================== */
   .converter-container {
@@ -1036,6 +1215,7 @@
   <button class="main-nav-btn" data-view="solver">📐 Solver</button>
   <button class="main-nav-btn" data-view="converter">🔄 Converter</button>
   <button class="main-nav-btn" data-view="finance">💰 Finance</button>
+  <button class="main-nav-btn" data-view="geometry">📏 Geometry</button>
   <button class="main-nav-btn" data-view="clock">🕐 Clock</button>
 </div>
 
@@ -1416,6 +1596,346 @@
                 <span>You Save</span>
                 <span id="discountSavings">$0.00</span>
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================
+       GEOMETRY CALCULATOR VIEW
+       ======================================== -->
+  <div class="view" id="geometry">
+    <div class="geometry-container">
+      <div class="geometry-tabs">
+        <button class="geometry-tab active" data-shape="circle">Circle</button>
+        <button class="geometry-tab" data-shape="triangle">Triangle</button>
+        <button class="geometry-tab" data-shape="rectangle">Rectangle</button>
+        <button class="geometry-tab" data-shape="square">Square</button>
+        <button class="geometry-tab" data-shape="trapezoid">Trapezoid</button>
+        <button class="geometry-tab" data-shape="cylinder">Cylinder</button>
+      </div>
+
+      <div class="geometry-card">
+        <!-- CIRCLE -->
+        <div class="geometry-section active" id="shapeCircle">
+          <div class="geometry-header">
+            <h3>Circle</h3>
+            <p>Calculate area, circumference, diameter, and radius</p>
+          </div>
+
+          <div class="geometry-visual">
+            <svg class="shape-svg" width="160" height="160" viewBox="0 0 160 160">
+              <circle cx="80" cy="80" r="60" fill="none" stroke="#5b9eff" stroke-width="3"/>
+              <line x1="80" y1="80" x2="140" y2="80" stroke="#4ade80" stroke-width="2"/>
+              <text x="110" y="75" fill="#4ade80" font-size="12" font-family="monospace">r</text>
+            </svg>
+          </div>
+
+          <div class="geometry-inputs">
+            <div class="geometry-input-group">
+              <label>Radius (r)</label>
+              <input type="number" class="geometry-input" id="circleRadius" placeholder="0" step="any" />
+            </div>
+            <div class="geometry-input-group">
+              <label>Diameter (d)</label>
+              <input type="number" class="geometry-input" id="circleDiameter" placeholder="0" step="any" />
+            </div>
+          </div>
+
+          <div class="geometry-results">
+            <h4>Results</h4>
+            <div class="geometry-result-item">
+              <div>
+                <div class="geometry-result-label">Area</div>
+                <div class="formula-hint">π × r²</div>
+              </div>
+              <div class="geometry-result-value" id="circleArea">0</div>
+            </div>
+            <div class="geometry-result-item">
+              <div>
+                <div class="geometry-result-label">Circumference</div>
+                <div class="formula-hint">2 × π × r</div>
+              </div>
+              <div class="geometry-result-value" id="circleCircumference">0</div>
+            </div>
+            <div class="geometry-result-item">
+              <div class="geometry-result-label">Diameter</div>
+              <div class="geometry-result-value" id="circleDiameterResult">0</div>
+            </div>
+            <div class="geometry-result-item">
+              <div class="geometry-result-label">Radius</div>
+              <div class="geometry-result-value" id="circleRadiusResult">0</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TRIANGLE -->
+        <div class="geometry-section" id="shapeTriangle">
+          <div class="geometry-header">
+            <h3>Triangle</h3>
+            <p>Calculate area, perimeter, and angles</p>
+          </div>
+
+          <div class="geometry-visual">
+            <svg class="shape-svg" width="180" height="160" viewBox="0 0 180 160">
+              <polygon points="90,20 20,140 160,140" fill="none" stroke="#5b9eff" stroke-width="3"/>
+              <text x="85" y="90" fill="#4ade80" font-size="12" font-family="monospace">h</text>
+              <text x="85" y="155" fill="#4ade80" font-size="12" font-family="monospace">b</text>
+            </svg>
+          </div>
+
+          <div class="geometry-inputs">
+            <div class="geometry-input-group">
+              <label>Base (b)</label>
+              <input type="number" class="geometry-input" id="triangleBase" placeholder="0" step="any" />
+            </div>
+            <div class="geometry-input-group">
+              <label>Height (h)</label>
+              <input type="number" class="geometry-input" id="triangleHeight" placeholder="0" step="any" />
+            </div>
+            <div class="geometry-input-group">
+              <label>Side A</label>
+              <input type="number" class="geometry-input" id="triangleSideA" placeholder="0" step="any" />
+            </div>
+            <div class="geometry-input-group">
+              <label>Side B</label>
+              <input type="number" class="geometry-input" id="triangleSideB" placeholder="0" step="any" />
+            </div>
+            <div class="geometry-input-group">
+              <label>Side C</label>
+              <input type="number" class="geometry-input" id="triangleSideC" placeholder="0" step="any" />
+            </div>
+          </div>
+
+          <div class="geometry-results">
+            <h4>Results</h4>
+            <div class="geometry-result-item">
+              <div>
+                <div class="geometry-result-label">Area</div>
+                <div class="formula-hint">½ × b × h</div>
+              </div>
+              <div class="geometry-result-value" id="triangleArea">0</div>
+            </div>
+            <div class="geometry-result-item">
+              <div>
+                <div class="geometry-result-label">Perimeter</div>
+                <div class="formula-hint">a + b + c</div>
+              </div>
+              <div class="geometry-result-value" id="trianglePerimeter">0</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RECTANGLE -->
+        <div class="geometry-section" id="shapeRectangle">
+          <div class="geometry-header">
+            <h3>Rectangle</h3>
+            <p>Calculate area, perimeter, and diagonal</p>
+          </div>
+
+          <div class="geometry-visual">
+            <svg class="shape-svg" width="200" height="140" viewBox="0 0 200 140">
+              <rect x="30" y="30" width="140" height="80" fill="none" stroke="#5b9eff" stroke-width="3"/>
+              <text x="95" y="25" fill="#4ade80" font-size="12" font-family="monospace">w</text>
+              <text x="15" y="75" fill="#4ade80" font-size="12" font-family="monospace">h</text>
+            </svg>
+          </div>
+
+          <div class="geometry-inputs">
+            <div class="geometry-input-group">
+              <label>Width (w)</label>
+              <input type="number" class="geometry-input" id="rectangleWidth" placeholder="0" step="any" />
+            </div>
+            <div class="geometry-input-group">
+              <label>Height (h)</label>
+              <input type="number" class="geometry-input" id="rectangleHeight" placeholder="0" step="any" />
+            </div>
+          </div>
+
+          <div class="geometry-results">
+            <h4>Results</h4>
+            <div class="geometry-result-item">
+              <div>
+                <div class="geometry-result-label">Area</div>
+                <div class="formula-hint">w × h</div>
+              </div>
+              <div class="geometry-result-value" id="rectangleArea">0</div>
+            </div>
+            <div class="geometry-result-item">
+              <div>
+                <div class="geometry-result-label">Perimeter</div>
+                <div class="formula-hint">2 × (w + h)</div>
+              </div>
+              <div class="geometry-result-value" id="rectanglePerimeter">0</div>
+            </div>
+            <div class="geometry-result-item">
+              <div>
+                <div class="geometry-result-label">Diagonal</div>
+                <div class="formula-hint">√(w² + h²)</div>
+              </div>
+              <div class="geometry-result-value" id="rectangleDiagonal">0</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SQUARE -->
+        <div class="geometry-section" id="shapeSquare">
+          <div class="geometry-header">
+            <h3>Square</h3>
+            <p>Calculate area, perimeter, and diagonal</p>
+          </div>
+
+          <div class="geometry-visual">
+            <svg class="shape-svg" width="160" height="160" viewBox="0 0 160 160">
+              <rect x="30" y="30" width="100" height="100" fill="none" stroke="#5b9eff" stroke-width="3"/>
+              <text x="75" y="25" fill="#4ade80" font-size="12" font-family="monospace">s</text>
+            </svg>
+          </div>
+
+          <div class="geometry-inputs">
+            <div class="geometry-input-group">
+              <label>Side (s)</label>
+              <input type="number" class="geometry-input" id="squareSide" placeholder="0" step="any" />
+            </div>
+          </div>
+
+          <div class="geometry-results">
+            <h4>Results</h4>
+            <div class="geometry-result-item">
+              <div>
+                <div class="geometry-result-label">Area</div>
+                <div class="formula-hint">s²</div>
+              </div>
+              <div class="geometry-result-value" id="squareArea">0</div>
+            </div>
+            <div class="geometry-result-item">
+              <div>
+                <div class="geometry-result-label">Perimeter</div>
+                <div class="formula-hint">4 × s</div>
+              </div>
+              <div class="geometry-result-value" id="squarePerimeter">0</div>
+            </div>
+            <div class="geometry-result-item">
+              <div>
+                <div class="geometry-result-label">Diagonal</div>
+                <div class="formula-hint">s × √2</div>
+              </div>
+              <div class="geometry-result-value" id="squareDiagonal">0</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TRAPEZOID -->
+        <div class="geometry-section" id="shapeTrapezoid">
+          <div class="geometry-header">
+            <h3>Trapezoid</h3>
+            <p>Calculate area and perimeter</p>
+          </div>
+
+          <div class="geometry-visual">
+            <svg class="shape-svg" width="200" height="160" viewBox="0 0 200 160">
+              <polygon points="50,30 150,30 180,130 20,130" fill="none" stroke="#5b9eff" stroke-width="3"/>
+              <text x="95" y="25" fill="#4ade80" font-size="12" font-family="monospace">a</text>
+              <text x="95" y="145" fill="#4ade80" font-size="12" font-family="monospace">b</text>
+              <text x="185" y="80" fill="#4ade80" font-size="12" font-family="monospace">h</text>
+            </svg>
+          </div>
+
+          <div class="geometry-inputs">
+            <div class="geometry-input-group">
+              <label>Base A (a)</label>
+              <input type="number" class="geometry-input" id="trapezoidBaseA" placeholder="0" step="any" />
+            </div>
+            <div class="geometry-input-group">
+              <label>Base B (b)</label>
+              <input type="number" class="geometry-input" id="trapezoidBaseB" placeholder="0" step="any" />
+            </div>
+            <div class="geometry-input-group">
+              <label>Height (h)</label>
+              <input type="number" class="geometry-input" id="trapezoidHeight" placeholder="0" step="any" />
+            </div>
+            <div class="geometry-input-group">
+              <label>Side C</label>
+              <input type="number" class="geometry-input" id="trapezoidSideC" placeholder="0" step="any" />
+            </div>
+            <div class="geometry-input-group">
+              <label>Side D</label>
+              <input type="number" class="geometry-input" id="trapezoidSideD" placeholder="0" step="any" />
+            </div>
+          </div>
+
+          <div class="geometry-results">
+            <h4>Results</h4>
+            <div class="geometry-result-item">
+              <div>
+                <div class="geometry-result-label">Area</div>
+                <div class="formula-hint">½ × (a + b) × h</div>
+              </div>
+              <div class="geometry-result-value" id="trapezoidArea">0</div>
+            </div>
+            <div class="geometry-result-item">
+              <div>
+                <div class="geometry-result-label">Perimeter</div>
+                <div class="formula-hint">a + b + c + d</div>
+              </div>
+              <div class="geometry-result-value" id="trapezoidPerimeter">0</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CYLINDER -->
+        <div class="geometry-section" id="shapeCylinder">
+          <div class="geometry-header">
+            <h3>Cylinder</h3>
+            <p>Calculate volume and surface area</p>
+          </div>
+
+          <div class="geometry-visual">
+            <svg class="shape-svg" width="160" height="180" viewBox="0 0 160 180">
+              <ellipse cx="80" cy="40" rx="50" ry="15" fill="none" stroke="#5b9eff" stroke-width="3"/>
+              <line x1="30" y1="40" x2="30" y2="140" stroke="#5b9eff" stroke-width="3"/>
+              <line x1="130" y1="40" x2="130" y2="140" stroke="#5b9eff" stroke-width="3"/>
+              <ellipse cx="80" cy="140" rx="50" ry="15" fill="none" stroke="#5b9eff" stroke-width="3"/>
+              <text x="85" y="95" fill="#4ade80" font-size="12" font-family="monospace">h</text>
+              <text x="105" y="35" fill="#4ade80" font-size="12" font-family="monospace">r</text>
+            </svg>
+          </div>
+
+          <div class="geometry-inputs">
+            <div class="geometry-input-group">
+              <label>Radius (r)</label>
+              <input type="number" class="geometry-input" id="cylinderRadius" placeholder="0" step="any" />
+            </div>
+            <div class="geometry-input-group">
+              <label>Height (h)</label>
+              <input type="number" class="geometry-input" id="cylinderHeight" placeholder="0" step="any" />
+            </div>
+          </div>
+
+          <div class="geometry-results">
+            <h4>Results</h4>
+            <div class="geometry-result-item">
+              <div>
+                <div class="geometry-result-label">Volume</div>
+                <div class="formula-hint">π × r² × h</div>
+              </div>
+              <div class="geometry-result-value" id="cylinderVolume">0</div>
+            </div>
+            <div class="geometry-result-item">
+              <div>
+                <div class="geometry-result-label">Surface Area</div>
+                <div class="formula-hint">2πr(r + h)</div>
+              </div>
+              <div class="geometry-result-value" id="cylinderSurface">0</div>
+            </div>
+            <div class="geometry-result-item">
+              <div>
+                <div class="geometry-result-label">Lateral Area</div>
+                <div class="formula-hint">2 × π × r × h</div>
+              </div>
+              <div class="geometry-result-value" id="cylinderLateral">0</div>
             </div>
           </div>
         </div>
@@ -2046,6 +2566,157 @@
 
   // Initialize clock
   updateClock();
+
+  // ========================================
+  // GEOMETRY CALCULATOR LOGIC
+  // ========================================
+  
+  // Geometry tab switching
+  document.querySelectorAll('.geometry-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelector('.geometry-tab.active').classList.remove('active');
+      tab.classList.add('active');
+      
+      document.querySelectorAll('.geometry-section').forEach(section => section.classList.remove('active'));
+      document.getElementById('shape' + tab.dataset.shape.charAt(0).toUpperCase() + tab.dataset.shape.slice(1)).classList.add('active');
+    });
+  });
+
+  // CIRCLE
+  const circleRadius = document.getElementById('circleRadius');
+  const circleDiameter = document.getElementById('circleDiameter');
+
+  circleRadius.addEventListener('input', () => {
+    const r = parseFloat(circleRadius.value) || 0;
+    circleDiameter.value = r * 2;
+    calculateCircle(r);
+  });
+
+  circleDiameter.addEventListener('input', () => {
+    const d = parseFloat(circleDiameter.value) || 0;
+    circleRadius.value = d / 2;
+    calculateCircle(d / 2);
+  });
+
+  function calculateCircle(r) {
+    const area = Math.PI * r * r;
+    const circumference = 2 * Math.PI * r;
+    const diameter = r * 2;
+
+    document.getElementById('circleArea').textContent = area.toFixed(2);
+    document.getElementById('circleCircumference').textContent = circumference.toFixed(2);
+    document.getElementById('circleDiameterResult').textContent = diameter.toFixed(2);
+    document.getElementById('circleRadiusResult').textContent = r.toFixed(2);
+  }
+
+  // TRIANGLE
+  const triangleBase = document.getElementById('triangleBase');
+  const triangleHeight = document.getElementById('triangleHeight');
+  const triangleSideA = document.getElementById('triangleSideA');
+  const triangleSideB = document.getElementById('triangleSideB');
+  const triangleSideC = document.getElementById('triangleSideC');
+
+  [triangleBase, triangleHeight, triangleSideA, triangleSideB, triangleSideC].forEach(input => {
+    input.addEventListener('input', calculateTriangle);
+  });
+
+  function calculateTriangle() {
+    const base = parseFloat(triangleBase.value) || 0;
+    const height = parseFloat(triangleHeight.value) || 0;
+    const a = parseFloat(triangleSideA.value) || 0;
+    const b = parseFloat(triangleSideB.value) || 0;
+    const c = parseFloat(triangleSideC.value) || 0;
+
+    const area = (base * height) / 2;
+    const perimeter = a + b + c;
+
+    document.getElementById('triangleArea').textContent = area.toFixed(2);
+    document.getElementById('trianglePerimeter').textContent = perimeter.toFixed(2);
+  }
+
+  // RECTANGLE
+  const rectangleWidth = document.getElementById('rectangleWidth');
+  const rectangleHeight = document.getElementById('rectangleHeight');
+
+  [rectangleWidth, rectangleHeight].forEach(input => {
+    input.addEventListener('input', calculateRectangle);
+  });
+
+  function calculateRectangle() {
+    const w = parseFloat(rectangleWidth.value) || 0;
+    const h = parseFloat(rectangleHeight.value) || 0;
+
+    const area = w * h;
+    const perimeter = 2 * (w + h);
+    const diagonal = Math.sqrt(w * w + h * h);
+
+    document.getElementById('rectangleArea').textContent = area.toFixed(2);
+    document.getElementById('rectanglePerimeter').textContent = perimeter.toFixed(2);
+    document.getElementById('rectangleDiagonal').textContent = diagonal.toFixed(2);
+  }
+
+  // SQUARE
+  const squareSide = document.getElementById('squareSide');
+
+  squareSide.addEventListener('input', calculateSquare);
+
+  function calculateSquare() {
+    const s = parseFloat(squareSide.value) || 0;
+
+    const area = s * s;
+    const perimeter = 4 * s;
+    const diagonal = s * Math.sqrt(2);
+
+    document.getElementById('squareArea').textContent = area.toFixed(2);
+    document.getElementById('squarePerimeter').textContent = perimeter.toFixed(2);
+    document.getElementById('squareDiagonal').textContent = diagonal.toFixed(2);
+  }
+
+  // TRAPEZOID
+  const trapezoidBaseA = document.getElementById('trapezoidBaseA');
+  const trapezoidBaseB = document.getElementById('trapezoidBaseB');
+  const trapezoidHeight = document.getElementById('trapezoidHeight');
+  const trapezoidSideC = document.getElementById('trapezoidSideC');
+  const trapezoidSideD = document.getElementById('trapezoidSideD');
+
+  [trapezoidBaseA, trapezoidBaseB, trapezoidHeight, trapezoidSideC, trapezoidSideD].forEach(input => {
+    input.addEventListener('input', calculateTrapezoid);
+  });
+
+  function calculateTrapezoid() {
+    const a = parseFloat(trapezoidBaseA.value) || 0;
+    const b = parseFloat(trapezoidBaseB.value) || 0;
+    const h = parseFloat(trapezoidHeight.value) || 0;
+    const c = parseFloat(trapezoidSideC.value) || 0;
+    const d = parseFloat(trapezoidSideD.value) || 0;
+
+    const area = ((a + b) * h) / 2;
+    const perimeter = a + b + c + d;
+
+    document.getElementById('trapezoidArea').textContent = area.toFixed(2);
+    document.getElementById('trapezoidPerimeter').textContent = perimeter.toFixed(2);
+  }
+
+  // CYLINDER
+  const cylinderRadius = document.getElementById('cylinderRadius');
+  const cylinderHeight = document.getElementById('cylinderHeight');
+
+  [cylinderRadius, cylinderHeight].forEach(input => {
+    input.addEventListener('input', calculateCylinder);
+  });
+
+  function calculateCylinder() {
+    const r = parseFloat(cylinderRadius.value) || 0;
+    const h = parseFloat(cylinderHeight.value) || 0;
+
+    const volume = Math.PI * r * r * h;
+    const surfaceArea = 2 * Math.PI * r * (r + h);
+    const lateralArea = 2 * Math.PI * r * h;
+
+    document.getElementById('cylinderVolume').textContent = volume.toFixed(2);
+    document.getElementById('cylinderSurface').textContent = surfaceArea.toFixed(2);
+    document.getElementById('cylinderLateral').textContent = lateralArea.toFixed(2);
+  }
 
   // ========================================
   // CONVERTER LOGIC
